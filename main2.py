@@ -1,4 +1,4 @@
-import os
+import os, sys
 import streamlit as st
 from services.mainServices import MainServices
 
@@ -12,13 +12,20 @@ uploaded_file = st.file_uploader(
     label_visibility="hidden"
 )
 
+# input from streamlit for user pick what kind of model use
+model_choice = st.selectbox(
+    "Select the model to use:",
+    ("Online", "Local")
+)
+
+# question = st.text_input("Ask a question about the PDF:")
 # st.button("Process PDF", on_click=load_pdf, args=(pdf_directory + pdf_name,))
 
 if uploaded_file:
     main_serv.upload_pdf(uploaded_file)
-    docs = main_serv.load_pdf(uploaded_file.name)
+    docs = main_serv.load_pdf(uploaded_file.name) # pdf_directory (internal) + uploaded_file.name
     chunked_docs = main_serv.split_text(docs)
-    main_serv.index_documents(chunked_docs)
+    main_serv.index_documents(chunked_docs, model_choice)
 
     question = st.chat_input("Ask a question about the PDF:")
 

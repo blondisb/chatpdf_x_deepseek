@@ -1,8 +1,10 @@
 import os
 from groq import Groq
+from langchain_ollama.llms import OllamaLLM
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PDFPlumberLoader
-from services.vectorstoreGroq import vector_store
+from langchain_ollama import OllamaEmbeddings
+from services.vectorstore import groq_vector_store, local_vector_store
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq.chat_models import ChatGroq
 from dotenv import load_dotenv, find_dotenv
@@ -37,6 +39,12 @@ class MainServices():
             # max_retries=2,
             # puedes especificar más parámetros según tu caso
         )
+
+        try:
+            self.local_llm=OllamaLLM(model=os.environ["LOCAL_LLM_MODEL"])
+        except Exception as e:
+            print(f"Error initializing local LLM: {e}")
+            self.local_llm = None
 
 
     def upload_pdf(self, file) -> None:
@@ -102,18 +110,27 @@ class MainServices():
             print("Text split successfully.")
 
 
-    def index_documents(self, docs): # Index the documents into the vector store
+    def index_documents(self, docs, model_choice): # Index the documents into the vector store
         # for doc in docs: vector_store.add_texts([doc.page_content], [doc.metadata])
-        try: vector_store.add_documents(docs)
+        try: 
+            if model_choice == 'Local':
+                local_vector_store.add_documents(docs)
+            else:
+                groq_vector_store.add_documents(docs)
+
         except Exception as e:
             print(f"Error indexing documents: {e}")
         finally:
             print("Documents indexed successfully.")
 
 
-    def retrieve_documents(self, query):
+    def retrieve_documents(self, query, model_choice):
         # Retrieve documents from the vector store based on the query
-        try: return vector_store.similarity_search(query)
+        try:
+            if model_choice == 'Local':
+                return local_vector_store.similarity_search(query)
+            else:
+                return groq_vector_store.similarity_search(query)
         except Exception as e:
             print(f"Error retrieving documents: {e}")
         finally:
@@ -125,7 +142,7 @@ class MainServices():
             # Use the model to answer the question based on the context
             context = "\n\n".join([doc.page_content for doc in docs])
             prompt = ChatPromptTemplate.from_template(self.template)
-            chain = prompt | self.llm
+            chain = prompt | self.local_llm if self.local_llm else prompt | self.llm
 
             return chain.invoke({"question":question, "context": context})
         except Exception as e:
