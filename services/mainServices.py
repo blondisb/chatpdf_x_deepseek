@@ -137,12 +137,12 @@ class MainServices():
             print("Documents retrieved successfully.")
 
 
-    def answer_question(self, question, docs):
+    def answer_question(self, question, docs, model_choice):
         try:
             # Use the model to answer the question based on the context
             context = "\n\n".join([doc.page_content for doc in docs])
             prompt = ChatPromptTemplate.from_template(self.template)
-            chain = prompt | self.local_llm if self.local_llm else prompt | self.llm
+            chain = prompt | self.local_llm if model_choice == 'Local' else prompt | self.llm
 
             return chain.invoke({"question":question, "context": context})
         except Exception as e:
