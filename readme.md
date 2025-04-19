@@ -6,6 +6,8 @@
 **ollama deepseek-r1** [link](https://ollama.com/library/deepseek-r1)
 
 **ollama langchain embbeddings** [text](https://python.langchain.com/docs/integrations/text_embedding/ollama/)
+* https://medium.com/towards-agi/how-to-implement-groq-embeddings-in-langchain-tutorial-9608fb417f6f
+* https://groq.com/retrieval-augmented-generation-with-groq-api/
 
 **streamlit** [text](https://pypi.org/project/streamlit/)
 
